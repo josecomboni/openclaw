@@ -238,3 +238,19 @@
   - `node --import tsx scripts/release-check.ts`
   - `pnpm release:check`
   - `pnpm test:install:smoke` or `OPENCLAW_INSTALL_SMOKE_SKIP_NONROOT=1 pnpm test:install:smoke` for non-root smoke path.
+
+## Plans & Security Artifacts
+
+- Planning documents (security assessments, scenario files, architecture notes) must **not** be committed to the main `openclaw` repo.
+- Instead, use the dedicated `openclaw-plans` repo at `~/workspace/openclaw-plans/` (remote: `https://github.com/josecomboni/openclaw-plans`).
+- **Folder convention**: create a subfolder matching the branch name from the main repo (e.g., `security/first-pass/`), then place plan documents directly inside and scenario files under a `scenarios/` subfolder:
+  ```
+  openclaw-plans/
+    <branch-name>/
+      <plan-name>.md          # Main plan document(s)
+      scenarios/
+        INDEX.md              # Scenario index and coverage map
+        phase*.md             # Per-phase scenario files
+  ```
+- **Workflow**: create files in the session workspace first, then copy to `~/workspace/openclaw-plans/<branch>/`, commit on a branch matching the openclaw branch name, and push to `origin`.
+- The `openclaw-plans` repo is **private**; never put real credentials, tokens, or PII in plan/scenario files.
