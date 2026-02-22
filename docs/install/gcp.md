@@ -266,6 +266,10 @@ services:
       # Recommended: keep the Gateway loopback-only on the VM; access via SSH tunnel.
       # To expose it publicly, remove the `127.0.0.1:` prefix and firewall accordingly.
       - "127.0.0.1:${OPENCLAW_GATEWAY_PORT}:18789"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     command:
       [
         "node",

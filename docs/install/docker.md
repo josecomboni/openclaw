@@ -189,6 +189,7 @@ Notes:
 The default Docker image is **security-first** and runs as the non-root `node`
 user. This keeps the attack surface small, but it means:
 
+- Compose defaults also set `security_opt: no-new-privileges:true` and `cap_drop: [ALL]`.
 - no system package installs at runtime
 - no Homebrew by default
 - no bundled Chromium/Playwright browsers
