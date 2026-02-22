@@ -536,6 +536,17 @@ Note: `gateway.remote.token` is **only** for remote CLI calls; it does not
 protect local WS access.
 Optional: pin remote TLS with `gateway.remote.tlsFingerprint` when using `wss://`.
 
+TLS fingerprint trust model:
+
+- When `gateway.remote.tlsFingerprint` is set, the client verifies the presented
+  certificate fingerprint directly.
+- This mode intentionally does not rely on normal CA chain validation, so treat
+  fingerprint distribution/rotation as a security-sensitive operation.
+- Use it only when you can verify the fingerprint out of band and keep the
+  channel for that verification trusted.
+- If you do not need explicit pinning, prefer normal `wss://` trust with CA
+  validation and leave `gateway.remote.tlsFingerprint` unset.
+
 Local device pairing:
 
 - Device pairing is auto‑approved for **local** connects (loopback or the

@@ -78,6 +78,13 @@ For threat model + hardening guidance (including `openclaw security audit --deep
 - `tools.fs.workspaceOnly: true` (optional): restricts `read`/`write`/`edit`/`apply_patch` paths to the workspace directory.
 - Avoid setting `tools.exec.applyPatch.workspaceOnly: false` unless you fully trust who can trigger tool execution.
 
+### Remote TLS fingerprint trust model
+
+- `gateway.remote.tlsFingerprint` is only valid with `wss://`.
+- When fingerprint pinning is enabled, trust is anchored to the configured fingerprint value; treat fingerprint distribution and rotation as security-sensitive.
+- Prefer standard CA-validated `wss://` when explicit pinning is not required.
+- If you use pinning, verify the fingerprint out of band and rotate it immediately after certificate changes.
+
 ### Web Interface Safety
 
 OpenClaw's web interface (Gateway Control UI + HTTP endpoints) is intended for **local use only**.
@@ -114,7 +121,8 @@ When running OpenClaw in Docker:
 
 1. The official image runs as a non-root user (`node`) for reduced attack surface
 2. Use `--read-only` flag when possible for additional filesystem protection
-3. Limit container capabilities with `--cap-drop=ALL`
+3. Set `--security-opt no-new-privileges:true` to prevent privilege escalation
+4. Limit container capabilities with `--cap-drop=ALL`
 
 Example secure Docker run:
 

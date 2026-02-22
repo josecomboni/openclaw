@@ -281,6 +281,16 @@
 - GHSA output should always include an explicit decision log even when no advisory is opened, documenting why each remaining finding is accepted risk vs remediation backlog.
 - Re-verify unresolved infra findings at phase close (for example unpinned GitHub Actions refs) with reproducible command output and carry forward any tooling blockers (for example missing `detect-secrets`) as explicit remediation tasks.
 
+## Security Learnings (Phase 6)
+
+- CI supply-chain remediation should pin every third-party GitHub Action in workflows to full 40-character commit SHAs, while keeping the original major tag as an inline comment (for example `# v4`) to preserve readability during upgrades.
+- After action pinning, re-run an automated unpinned-ref check and record the explicit result (`UNPINNED_COUNT=0`) in security artifacts to prove closure of OWASP A08/ASVS V14.2.2 gaps.
+
+## Security Learnings (Phase 7 and Phase 8)
+
+- TLS fingerprint pinning must be documented as an explicit trust-model tradeoff: use `wss://` only, verify fingerprints out of band, and treat fingerprint rotation/distribution like a security-sensitive secret-management operation.
+- Docker compose hardening should set both `security_opt: no-new-privileges:true` and `cap_drop: [ALL]` for runtime services by default to reduce privilege-escalation and capability abuse paths.
+
 ## Post-Task Self-Learning (Required)
 
 - After **every completed task**, append durable, reusable engineering/security learnings to this file as short instructions.
