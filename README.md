@@ -180,7 +180,7 @@ Run `openclaw doctor` to surface risky/misconfigured DM policies.
 
 - [Control UI](https://docs.openclaw.ai/web) + [WebChat](https://docs.openclaw.ai/web/webchat) served directly from the Gateway.
 - [Tailscale Serve/Funnel](https://docs.openclaw.ai/gateway/tailscale) or [SSH tunnels](https://docs.openclaw.ai/gateway/remote) with token/password auth.
-- [Nix mode](https://docs.openclaw.ai/install/nix) for declarative config; [Docker](https://docs.openclaw.ai/install/docker)-based installs.
+- [Nix mode](https://docs.openclaw.ai/install/nix) for declarative config; [Docker](https://docs.openclaw.ai/install/docker)-based installs (Compose examples default to `security_opt: no-new-privileges:true` and `cap_drop: [ALL]`).
 - [Doctor](https://docs.openclaw.ai/gateway/doctor) migrations, [logging](https://docs.openclaw.ai/logging).
 
 ## How it works (short)
@@ -235,6 +235,7 @@ It’s perfectly fine to run the Gateway on a small Linux instance. Clients (mac
 - **Gateway host** runs the exec tool and channel connections by default.
 - **Device nodes** run device‑local actions (`system.run`, camera, screen recording, notifications) via `node.invoke`.
   In short: exec runs where the Gateway lives; device actions run where the device lives.
+- For remote WS access, prefer `wss://`; if you set `gateway.remote.tlsFingerprint`, verify the fingerprint out of band and rotate it whenever the certificate changes.
 
 Details: [Remote access](https://docs.openclaw.ai/gateway/remote) · [Nodes](https://docs.openclaw.ai/nodes) · [Security](https://docs.openclaw.ai/gateway/security)
 
@@ -430,6 +431,7 @@ Use these when you’re past the onboarding flow and want the deeper reference.
 - [Platform guides: Windows (WSL2)](https://docs.openclaw.ai/platforms/windows), [Linux](https://docs.openclaw.ai/platforms/linux), [macOS](https://docs.openclaw.ai/platforms/macos), [iOS](https://docs.openclaw.ai/platforms/ios), [Android](https://docs.openclaw.ai/platforms/android)
 - [Debug common failures with the troubleshooting guide.](https://docs.openclaw.ai/channels/troubleshooting)
 - [Review security guidance before exposing anything.](https://docs.openclaw.ai/gateway/security)
+- [Use hardened container defaults and sandbox notes from the Docker install guide.](https://docs.openclaw.ai/install/docker)
 
 ## Advanced docs (discovery + control)
 
