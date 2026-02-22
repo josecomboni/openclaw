@@ -3,6 +3,13 @@ import { stripEnvelope, stripMessageIdHints } from "../shared/chat-envelope.js";
 
 export { stripEnvelope };
 
+const UNICODE_FORMAT_AND_BIDI_RE = /[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+
+function normalizeUntrustedMessageText(text: string): string {
+  // NFKC collapses full-width lookalikes (e.g. ［message_id: ...］) before stripping.
+  return text.normalize("NFKC").replace(UNICODE_FORMAT_AND_BIDI_RE, "");
+}
+
 function stripEnvelopeFromContentWithRole(
   content: unknown[],
   stripUserEnvelope: boolean,
@@ -16,7 +23,8 @@ function stripEnvelopeFromContentWithRole(
     if (entry.type !== "text" || typeof entry.text !== "string") {
       return item;
     }
-    const inboundStripped = stripInboundMetadata(entry.text);
+    const normalized = normalizeUntrustedMessageText(entry.text);
+    const inboundStripped = stripInboundMetadata(normalized);
     const stripped = stripUserEnvelope
       ? stripMessageIdHints(stripEnvelope(inboundStripped))
       : inboundStripped;
@@ -44,7 +52,8 @@ export function stripEnvelopeFromMessage(message: unknown): unknown {
   const next: Record<string, unknown> = { ...entry };
 
   if (typeof entry.content === "string") {
-    const inboundStripped = stripInboundMetadata(entry.content);
+    const normalized = normalizeUntrustedMessageText(entry.content);
+    const inboundStripped = stripInboundMetadata(normalized);
     const stripped = stripUserEnvelope
       ? stripMessageIdHints(stripEnvelope(inboundStripped))
       : inboundStripped;
@@ -59,7 +68,8 @@ export function stripEnvelopeFromMessage(message: unknown): unknown {
       changed = true;
     }
   } else if (typeof entry.text === "string") {
-    const inboundStripped = stripInboundMetadata(entry.text);
+    const normalized = normalizeUntrustedMessageText(entry.text);
+    const inboundStripped = stripInboundMetadata(normalized);
     const stripped = stripUserEnvelope
       ? stripMessageIdHints(stripEnvelope(inboundStripped))
       : inboundStripped;

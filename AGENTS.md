@@ -254,3 +254,15 @@
   ```
 - **Workflow**: create files in the session workspace first, then copy to `~/workspace/openclaw-plans/<branch>/`, commit on a branch matching the openclaw branch name, and push to `origin`.
 - The `openclaw-plans` repo is **private**; never put real credentials, tokens, or PII in plan/scenario files.
+
+## Security Learnings (Phase 2)
+
+- Prompt sanitization hardening: normalize untrusted message text with Unicode NFKC and strip zero-width/bidi format characters **before** envelope and metadata stripping.
+- Plugin scanner hardening: detect VM-based dynamic execution (`vm.Script`, `vm.runIn*`), obfuscated eval member access (`["ev" + "al"]`), `Reflect.construct(Function, ...)`, obfuscated dynamic `child_process` imports, and standalone `process.env` access.
+- Trusted-proxy auth hardening: reject proxy user header values containing control characters and compare `allowUsers` entries case-insensitively.
+
+## Post-Task Self-Learning (Required)
+
+- After **every completed task**, append durable, reusable engineering/security learnings to this file as short instructions.
+- After **every completed task**, persist the same learnings via memory (`store_memory`) when they are actionable for future sessions.
+- Each learning must include: what changed, why it matters, and how it was validated (tests/checks), without including secrets or environment-specific sensitive data.

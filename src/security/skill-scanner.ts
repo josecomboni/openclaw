@@ -109,6 +109,39 @@ const STANDARD_PORTS = new Set([80, 443, 8080, 8443, 3000]);
 
 const SOURCE_RULES: SourceRule[] = [
   {
+    ruleId: "dynamic-code-execution",
+    severity: "critical",
+    message: "VM-based dynamic code execution detected",
+    pattern:
+      /\bvm\.(?:runInNewContext|runInContext|runInThisContext)\s*\(|\bnew\s+(?:vm\.)?Script\s*\(/,
+    requiresContext:
+      /(?:from\s+["'](?:node:)?vm["']|require\(\s*["'](?:node:)?vm["']\s*\)|import\(\s*["'](?:node:)?vm["']\s*\))/,
+  },
+  {
+    ruleId: "dynamic-code-execution",
+    severity: "critical",
+    message: "Obfuscated eval member access detected",
+    pattern: /\[\s*["']ev["']\s*\+\s*["']al["']\s*\]/,
+  },
+  {
+    ruleId: "dynamic-code-execution",
+    severity: "critical",
+    message: "Reflect.construct(Function, …) dynamic execution detected",
+    pattern: /\bReflect\.construct\s*\(\s*Function\b/,
+  },
+  {
+    ruleId: "dangerous-exec",
+    severity: "critical",
+    message: "Obfuscated child_process import detected",
+    pattern: /(?:require|import)\s*\(\s*["']child_["']\s*\+\s*["']process["']\s*\)/,
+  },
+  {
+    ruleId: "env-access",
+    severity: "warn",
+    message: "Direct process.env access detected",
+    pattern: /\bprocess\.env(?:\b|\.|\[)/,
+  },
+  {
     ruleId: "potential-exfiltration",
     severity: "warn",
     message: "File read combined with network send — possible data exfiltration",

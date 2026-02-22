@@ -425,6 +425,18 @@ describe("trusted-proxy auth", () => {
     expect(res.reason).toBe("trusted_proxy_user_missing");
   });
 
+  it("rejects request with control characters in user header", async () => {
+    const res = await authorizeTrustedProxy({
+      headers: {
+        "x-forwarded-user": "nick@example.com\tadmin",
+        "x-forwarded-proto": "https",
+      },
+    });
+
+    expect(res.ok).toBe(false);
+    expect(res.reason).toBe("trusted_proxy_user_invalid");
+  });
+
   it("rejects request with missing required headers", async () => {
     const res = await authorizeTrustedProxy({
       headers: {
@@ -472,6 +484,25 @@ describe("trusted-proxy auth", () => {
 
     expect(res.ok).toBe(true);
     expect(res.method).toBe("trusted-proxy");
+    expect(res.user).toBe("nick@example.com");
+  });
+
+  it("matches allowlist case-insensitively", async () => {
+    const res = await authorizeTrustedProxy({
+      auth: {
+        mode: "trusted-proxy",
+        allowTailscale: false,
+        trustedProxy: {
+          userHeader: "x-forwarded-user",
+          allowUsers: ["Nick@Example.com"],
+        },
+      },
+      headers: {
+        "x-forwarded-user": "nick@example.com",
+      },
+    });
+
+    expect(res.ok).toBe(true);
     expect(res.user).toBe("nick@example.com");
   });
 
