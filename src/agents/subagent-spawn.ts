@@ -20,6 +20,7 @@ import {
 } from "./tools/sessions-helpers.js";
 
 export const SUBAGENT_SPAWN_MODES = ["run", "session"] as const;
+const MAX_SUBAGENT_TASK_CHARS = 8_000;
 export type SpawnSubagentMode = (typeof SUBAGENT_SPAWN_MODES)[number];
 
 export type SpawnSubagentParams = {
@@ -164,6 +165,12 @@ export async function spawnSubagentDirect(
   ctx: SpawnSubagentContext,
 ): Promise<SpawnSubagentResult> {
   const task = params.task;
+  if (task.length > MAX_SUBAGENT_TASK_CHARS) {
+    return {
+      status: "error",
+      error: `Task too long (${task.length} chars, max ${MAX_SUBAGENT_TASK_CHARS}).`,
+    };
+  }
   const label = params.label?.trim() || "";
   const requestedAgentId = params.agentId;
   const modelOverride = params.model;

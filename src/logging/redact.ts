@@ -32,11 +32,11 @@ const DEFAULT_REDACT_KEEP_END = 4;
 
 const DEFAULT_REDACT_PATTERNS: string[] = [
   // ENV-style assignments.
-  String.raw`\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD)\b\s*[=:]\s*(["']?)([^\s"'\\]+)\1`,
+  String.raw`/\b[A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|AUTHORIZATION)[A-Z0-9_]*\b\s*[=:]\s*(["']?)([^\s"'\\]+)\1/g`,
   // JSON fields.
-  String.raw`"(?:apiKey|token|secret|password|passwd|accessToken|refreshToken)"\s*:\s*"([^"]+)"`,
+  String.raw`"(?:apiKey|token|secret|password|passwd|accessToken|refreshToken|credential|credentials|authorization|bearer|providerKey|clientPass|accessCredential|bearerCredential)"\s*:\s*"([^"]+)"`,
   // CLI flags.
-  String.raw`--(?:api[-_]?key|token|secret|password|passwd)\s+(["']?)([^\s"']+)\1`,
+  String.raw`--(?:api[-_]?key|token|secret|password|passwd|credential|credentials|authorization|auth|bearer|provider[-_]?key|client[-_]?pass)\s+(["']?)([^\s"']+)\1`,
   // Authorization headers.
   String.raw`Authorization\s*[:=]\s*Bearer\s+([A-Za-z0-9._\-+=]+)`,
   String.raw`\bBearer\s+([A-Za-z0-9._\-+=]{18,})\b`,

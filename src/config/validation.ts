@@ -8,7 +8,7 @@ import {
 } from "../plugins/config-state.js";
 import { loadPluginManifestRegistry } from "../plugins/manifest-registry.js";
 import { validateJsonSchemaValue } from "../plugins/schema-validator.js";
-import { isRecord } from "../utils.js";
+import { isRecord, resolveUserPath } from "../utils.js";
 import { findDuplicateAgentDirs, formatDuplicateAgentDirError } from "./agent-dirs.js";
 import { applyAgentDefaults, applyModelDefaults, applySessionDefaults } from "./defaults.js";
 import { findLegacyConfigIssues } from "./legacy.js";
@@ -19,6 +19,20 @@ const AVATAR_SCHEME_RE = /^[a-z][a-z0-9+.-]*:/i;
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
 const WINDOWS_ABS_RE = /^[a-zA-Z]:[\\/]/;
+const WINDOWS_ROOT_RE = /^[a-zA-Z]:[\\/]*$/;
+const POSIX_SANDBOX_ROOT_BLOCKLIST = new Set<string>([
+  "/bin",
+  "/boot",
+  "/dev",
+  "/etc",
+  "/lib",
+  "/lib64",
+  "/proc",
+  "/root",
+  "/run",
+  "/sbin",
+  "/sys",
+]);
 
 function isWorkspaceAvatarPath(value: string, workspaceDir: string): boolean {
   const workspaceRoot = path.resolve(workspaceDir);
@@ -83,6 +97,59 @@ function validateIdentityAvatar(config: OpenClawConfig): ConfigValidationIssue[]
   return issues;
 }
 
+function validateSandboxWorkspaceRoots(config: OpenClawConfig): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+  const addIssue = (workspaceRootRaw: string, issuePath: string) => {
+    const trimmed = workspaceRootRaw.trim();
+    if (!trimmed) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not be empty.",
+      });
+      return;
+    }
+    if (WINDOWS_ROOT_RE.test(trimmed)) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not be the filesystem root.",
+      });
+      return;
+    }
+    const resolved = resolveUserPath(trimmed);
+    const root = path.parse(resolved).root;
+    if (resolved === root) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not be the filesystem root.",
+      });
+      return;
+    }
+    if (path.sep === "/" && POSIX_SANDBOX_ROOT_BLOCKLIST.has(resolved)) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not point to a top-level system directory.",
+      });
+    }
+  };
+
+  const defaultRoot = config.agents?.defaults?.sandbox?.workspaceRoot;
+  if (typeof defaultRoot === "string") {
+    addIssue(defaultRoot, "agents.defaults.sandbox.workspaceRoot");
+  }
+  const agents = config.agents?.list;
+  if (!Array.isArray(agents) || agents.length === 0) {
+    return issues;
+  }
+  for (const [index, entry] of agents.entries()) {
+    const workspaceRoot = entry?.sandbox?.workspaceRoot;
+    if (typeof workspaceRoot !== "string") {
+      continue;
+    }
+    addIssue(workspaceRoot, `agents.list.${index}.sandbox.workspaceRoot`);
+  }
+  return issues;
+}
+
 /**
  * Validates config without applying runtime defaults.
  * Use this when you need the raw validated config (e.g., for writing back to file).
@@ -125,6 +192,12 @@ export function validateConfigObjectRaw(
   const avatarIssues = validateIdentityAvatar(validated.data as OpenClawConfig);
   if (avatarIssues.length > 0) {
     return { ok: false, issues: avatarIssues };
+  }
+  const sandboxWorkspaceRootIssues = validateSandboxWorkspaceRoots(
+    validated.data as OpenClawConfig,
+  );
+  if (sandboxWorkspaceRootIssues.length > 0) {
+    return { ok: false, issues: sandboxWorkspaceRootIssues };
   }
   return {
     ok: true,

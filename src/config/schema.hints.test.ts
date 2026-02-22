@@ -30,6 +30,9 @@ describe("isSensitiveConfigPath", () => {
     expect(isSensitiveConfigPath("channels.slack.token")).toBe(true);
     expect(isSensitiveConfigPath("models.providers.openai.apiKey")).toBe(true);
     expect(isSensitiveConfigPath("channels.irc.nickserv.password")).toBe(true);
+    expect(isSensitiveConfigPath("plugins.entries.demo.config.bearerCredential")).toBe(true);
+    expect(isSensitiveConfigPath("plugins.entries.demo.config.providerKey")).toBe(true);
+    expect(isSensitiveConfigPath("plugins.entries.demo.config.clientPass")).toBe(true);
   });
 });
 

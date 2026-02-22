@@ -104,6 +104,18 @@ describe("sessions_spawn depth + child limits", () => {
     });
   });
 
+  it("rejects oversized spawn tasks", async () => {
+    setSubagentLimits({ maxSpawnDepth: 2 });
+    const tool = createSessionsSpawnTool({ agentSessionKey: "agent:main:subagent:parent" });
+    const result = await tool.execute("call-task-too-long", { task: "a".repeat(8_001) });
+
+    expect(result.details).toMatchObject({
+      status: "error",
+      error: "Task too long (8001 chars, max 8000).",
+    });
+    expect(callGatewayMock).not.toHaveBeenCalled();
+  });
+
   it("allows depth-1 callers when maxSpawnDepth is 2", async () => {
     setSubagentLimits({ maxSpawnDepth: 2 });
 

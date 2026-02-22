@@ -44,6 +44,17 @@ describe("fetchWithSsrFGuard hardening", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it("rejects URLs with embedded credentials before fetch", async () => {
+    const fetchImpl = vi.fn();
+    await expect(
+      fetchWithSsrFGuard({
+        url: "https://user:pass@example.com/private",
+        fetchImpl,
+      }),
+    ).rejects.toThrow(/credentials/i);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("blocks redirect chains that hop to private hosts", async () => {
     const lookupFn = vi.fn(async () => [
       { address: "93.184.216.34", family: 4 },

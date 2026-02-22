@@ -31,6 +31,16 @@ describe("redactSensitiveText", () => {
     expect(output).toBe('{"token":"abcdef…ghij"}');
   });
 
+  it("masks credential-style JSON field names", () => {
+    const input =
+      '{"providerKey":"abcdef1234567890ghij","bearerCredential":"zyxwvu1234567890ghij"}';
+    const output = redactSensitiveText(input, {
+      mode: "tools",
+      patterns: defaults,
+    });
+    expect(output).toBe('{"providerKey":"abcdef…ghij","bearerCredential":"zyxwvu…ghij"}');
+  });
+
   it("masks bearer tokens", () => {
     const input = "Authorization: Bearer abcdef1234567890ghij";
     const output = redactSensitiveText(input, {
@@ -66,6 +76,15 @@ describe("redactSensitiveText", () => {
       patterns: defaults,
     });
     expect(output).toBe("TOKEN=***");
+  });
+
+  it("masks authorization-style env assignments", () => {
+    const input = "AUTHORIZATION_VALUE=abcdef1234567890ghij";
+    const output = redactSensitiveText(input, {
+      mode: "tools",
+      patterns: defaults,
+    });
+    expect(output).toBe("AUTHORIZATION_VALUE=abcdef…ghij");
   });
 
   it("redacts private key blocks", () => {

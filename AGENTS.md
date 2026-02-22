@@ -102,8 +102,10 @@
 **Full maintainer PR workflow (optional):** If you want the repo's end-to-end maintainer workflow (triage order, quality bar, rebase rules, commit/changelog conventions, co-contributor policy, and the `review-pr` > `prepare-pr` > `merge-pr` pipeline), see `.agents/skills/PR_WORKFLOW.md`. Maintainers may use other workflows; when a maintainer specifies a workflow, follow that. If no workflow is specified, default to PR_WORKFLOW.
 
 - Create commits with `scripts/committer "<msg>" <file...>`; avoid manual `git add`/`git commit` so staging stays scoped.
+- When work is complete, include all relevant changed files (including newly created files) in the commit and use an appropriate one-sentence summary of the executed task/changes as the commit message.
 - Follow concise, action-oriented commit messages (e.g., `CLI: add verbose flag to send`).
 - Group related changes; avoid bundling unrelated refactors.
+- After committing, ask the user if they want you to push to `origin`.
 - PR submission template (canonical): `.github/pull_request_template.md`
 - Issue submission templates (canonical): `.github/ISSUE_TEMPLATE/`
 
@@ -260,6 +262,24 @@
 - Prompt sanitization hardening: normalize untrusted message text with Unicode NFKC and strip zero-width/bidi format characters **before** envelope and metadata stripping.
 - Plugin scanner hardening: detect VM-based dynamic execution (`vm.Script`, `vm.runIn*`), obfuscated eval member access (`["ev" + "al"]`), `Reflect.construct(Function, ...)`, obfuscated dynamic `child_process` imports, and standalone `process.env` access.
 - Trusted-proxy auth hardening: reject proxy user header values containing control characters and compare `allowUsers` entries case-insensitively.
+
+## Security Learnings (Phase 3)
+
+- Sandbox isolation guard: reject empty/dangerous `sandbox.workspaceRoot` values (filesystem root and top-level system dirs) during config validation to prevent accidental host-path overreach; validated by `config.sandbox-workspace-root-validation.test.ts`.
+- SSRF outbound guard: reject credential-bearing URLs in `fetchWithSsrFGuard` before dispatching requests; validated by `fetch-guard.ssrf.test.ts`.
+- Agentic abuse guard: cap `sessions_spawn` task size to 8000 chars in `spawnSubagentDirect` to reduce unbounded prompt payload/resource abuse; validated by `openclaw-tools.subagents.sessions-spawn-depth-limits.test.ts`.
+
+## Security Learnings (Phase 4)
+
+- Crypto-safe ephemeral token generation: do not use `Math.random()` for security-relevant interaction tokens (for example Slack external arg menu tokens); use `crypto.randomBytes(...)` instead and keep token scope/time-to-live bounded.
+- Redaction robustness: extend sensitive-key heuristics and log redaction patterns to cover credential-style names beyond `token/apiKey/password` (for example `credential`, `authorization`, `bearer`, `providerKey`, `clientPass`), and back changes with regression tests.
+- Docker context hygiene: explicitly exclude local secret-bearing files (`.env*`, `openclaw.json`, `credentials/`) in `.dockerignore` to prevent accidental credential leakage into build contexts.
+
+## Security Learnings (Phase 5)
+
+- Final reporting must include a consolidated vulnerability register with explicit status transitions (`open`, `accepted-risk`, `fixed`) and CVSS v3.1 scores so remediation ownership can be tracked without re-reading earlier phase reports.
+- GHSA output should always include an explicit decision log even when no advisory is opened, documenting why each remaining finding is accepted risk vs remediation backlog.
+- Re-verify unresolved infra findings at phase close (for example unpinned GitHub Actions refs) with reproducible command output and carry forward any tooling blockers (for example missing `detect-secrets`) as explicit remediation tasks.
 
 ## Post-Task Self-Learning (Required)
 
