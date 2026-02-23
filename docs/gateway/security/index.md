@@ -910,8 +910,13 @@ If your AI does something bad:
 
 ## Secret Scanning (detect-secrets)
 
-CI runs `detect-secrets scan --baseline .secrets.baseline` in the `secrets` job.
-If it fails, there are new candidates not yet in the baseline.
+CI runs two checks in the `secrets` job:
+
+1. Baseline inventory: `detect-secrets scan --baseline .secrets.baseline`
+2. Changed-file gate: scans added/modified files against the same baseline to block
+   newly introduced candidates in PRs/pushes.
+
+If either check fails, there are candidate secrets that need review.
 
 ### If CI fails
 
@@ -919,6 +924,14 @@ If it fails, there are new candidates not yet in the baseline.
 
    ```bash
    detect-secrets scan --baseline .secrets.baseline
+   ```
+
+   For changed-file gating:
+
+   ```bash
+   BASE=<base-commit-sha>
+   mapfile -t files < <(git diff --name-only --diff-filter=AM "$BASE" HEAD)
+   detect-secrets scan --baseline .secrets.baseline "${files[@]}"
    ```
 
 2. Understand the tools:
@@ -934,9 +947,22 @@ If it fails, there are new candidates not yet in the baseline.
 
 5. If you need new excludes, add them to `.detect-secrets.cfg` and regenerate the
    baseline with matching `--exclude-files` / `--exclude-lines` flags (the config
-   file is reference-only; detect-secrets doesn’t read it automatically).
+   file is reference-only; detect-secrets doesn’t read it automatically). Keep the
+   same exclusions for any local changed-file scans.
 
 Commit the updated `.secrets.baseline` once it reflects the intended state.
+
+## Trivy Scope (filesystem scans)
+
+When running repo-wide Trivy filesystem scans, skip vendored A2UI mirrors under
+`vendor/a2ui/**` because they are non-shipping inputs:
+
+```bash
+trivy fs --severity HIGH,CRITICAL --exit-code 1 \
+  --skip-dirs vendor/a2ui/specification \
+  --skip-dirs vendor/a2ui/renderers \
+  .
+```
 
 ## Reporting Security Issues
 

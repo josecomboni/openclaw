@@ -135,11 +135,33 @@ docker run --read-only --cap-drop=ALL \
 ## Security Scanning
 
 This project uses `detect-secrets` for automated secret detection in CI/CD.
-See `.detect-secrets.cfg` for configuration and `.secrets.baseline` for the baseline.
+CI enforces two checks:
+
+1. Full baseline inventory scan: `detect-secrets scan --baseline .secrets.baseline`
+2. Changed-file gate (new secrets only): scan added/modified files against the same baseline
+
+See `.detect-secrets.cfg` for scan exclusion patterns and `.secrets.baseline` for the baseline inventory.
 
 Run locally:
 
 ```bash
 pip install detect-secrets==1.5.0
 detect-secrets scan --baseline .secrets.baseline
+```
+
+Reproduce the changed-file gate:
+
+```bash
+BASE=<base-commit-sha>
+mapfile -t files < <(git diff --name-only --diff-filter=AM "$BASE" HEAD)
+detect-secrets scan --baseline .secrets.baseline "${files[@]}"
+```
+
+For Trivy filesystem scans, treat vendored A2UI mirrors as non-shipping content:
+
+```bash
+trivy fs --severity HIGH,CRITICAL --exit-code 1 \
+  --skip-dirs vendor/a2ui/specification \
+  --skip-dirs vendor/a2ui/renderers \
+  .
 ```

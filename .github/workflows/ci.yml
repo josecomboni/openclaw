@@ -21,7 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          fetch-depth: 0
           submodules: false
 
       - name: Detect docs-only changes
@@ -132,6 +131,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          fetch-depth: 0
           submodules: false
 
       - name: Setup Node environment
@@ -158,6 +158,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
+          fetch-depth: 0
           submodules: false
 
       - name: Setup Node environment
@@ -335,10 +336,52 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install detect-secrets==1.5.0
 
-      - name: Detect secrets
+      - name: Detect secrets baseline
         run: |
           if ! detect-secrets scan --baseline .secrets.baseline; then
-            echo "::error::Secret scanning failed. See docs/gateway/security.md#secret-scanning-detect-secrets"
+            echo "::error::Secret scanning failed. See https://docs.openclaw.ai/gateway/security#secret-scanning-detect-secrets"
+            exit 1
+          fi
+
+      - name: Detect newly introduced secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No comparable base SHA found; skipping changed-file secret gate."
+            exit 0
+          fi
+
+          mapfile -t changed_files < <(git diff --name-only --diff-filter=AM "$BASE" "$GITHUB_SHA")
+          if [ "${#changed_files[@]}" -eq 0 ]; then
+            echo "No changed files to scan for new secrets."
+            exit 0
+          fi
+
+          scan_files=()
+          for file in "${changed_files[@]}"; do
+            if [[ "$file" =~ (^|/)pnpm-lock\.yaml$|(^|/)(dist|vendor)/|(^|/)\.detect-secrets\.cfg$ ]]; then
+              continue
+            fi
+            if [ -f "$file" ]; then
+              scan_files+=("$file")
+            fi
+          done
+
+          if [ "${#scan_files[@]}" -eq 0 ]; then
+            echo "No changed source files remain after secret-scan exclusions."
+            exit 0
+          fi
+
+          if ! detect-secrets scan --baseline .secrets.baseline "${scan_files[@]}"; then
+            echo "::error::New secret candidate detected in changed files. See https://docs.openclaw.ai/gateway/security#secret-scanning-detect-secrets"
             exit 1
           fi
 
