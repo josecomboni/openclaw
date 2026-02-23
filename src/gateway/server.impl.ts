@@ -310,11 +310,12 @@ export async function startGatewayServer(
   let hooksConfig = runtimeConfig.hooksConfig;
   const canvasHostEnabled = runtimeConfig.canvasHostEnabled;
 
-  // Create auth rate limiter only when explicitly configured.
+  // Always enforce auth throttling. Loopback is throttled by default unless explicitly exempted.
   const rateLimitConfig = cfgAtStart.gateway?.auth?.rateLimit;
-  const authRateLimiter: AuthRateLimiter | undefined = rateLimitConfig
-    ? createAuthRateLimiter(rateLimitConfig)
-    : undefined;
+  const authRateLimiter: AuthRateLimiter = createAuthRateLimiter({
+    ...rateLimitConfig,
+    exemptLoopback: rateLimitConfig?.exemptLoopback ?? false,
+  });
 
   let controlUiRootState: ControlUiRootState | undefined;
   if (controlUiRootOverride) {

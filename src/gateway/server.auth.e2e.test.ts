@@ -173,6 +173,32 @@ function resolveGatewayTokenOrEnv(): string {
   return String(token ?? "");
 }
 
+test("rate-limits repeated failed shared-secret auth by default", async () => {
+  await withGatewayServer(async ({ port }) => {
+    let rateLimited = false;
+    for (let attempt = 1; attempt <= 15; attempt += 1) {
+      const ws = await openWs(port);
+      try {
+        const res = await connectReq(ws, {
+          role: "operator",
+          token: `wrong-${attempt}`,
+          device: null,
+        });
+        if (
+          !res.ok &&
+          (res.error?.message ?? "").includes("too many failed authentication attempts")
+        ) {
+          rateLimited = true;
+          break;
+        }
+      } finally {
+        ws.close();
+      }
+    }
+    expect(rateLimited).toBe(true);
+  });
+});
+
 async function approvePendingPairingIfNeeded() {
   const { approveDevicePairing, listDevicePairing } = await import("../infra/device-pairing.js");
   const list = await listDevicePairing();

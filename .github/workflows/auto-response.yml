@@ -3,13 +3,14 @@ name: Auto response
 on:
   issues:
     types: [opened, edited, labeled]
-  pull_request_target:
+  pull_request:
     types: [labeled]
 
 permissions: {}
 
 jobs:
   auto-response:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       issues: write
       pull-requests: write

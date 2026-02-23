@@ -238,4 +238,19 @@ describe("update-startup", () => {
     expect(log.info).not.toHaveBeenCalled();
     await expect(fs.stat(path.join(tempDir, "update-check.json"))).rejects.toThrow();
   });
+
+  it("writes update state with private permissions", async () => {
+    if (process.platform === "win32") {
+      return;
+    }
+
+    await runUpdateCheckAndReadState("stable");
+
+    const statePath = path.join(tempDir, "update-check.json");
+    const dirStat = await fs.stat(tempDir);
+    const fileStat = await fs.stat(statePath);
+
+    expect(dirStat.mode & 0o777).toBe(0o700);
+    expect(fileStat.mode & 0o777).toBe(0o600);
+  });
 });

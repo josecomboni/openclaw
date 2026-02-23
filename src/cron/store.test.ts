@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { loadCronStore, resolveCronStorePath } from "./store.js";
+import { loadCronStore, resolveCronStorePath, saveCronStore } from "./store.js";
 
 async function makeStorePath() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-cron-store-"));
@@ -41,6 +41,22 @@ describe("cron store", () => {
     const store = await makeStorePath();
     await fs.writeFile(store.storePath, "{ not json", "utf-8");
     await expect(loadCronStore(store.storePath)).rejects.toThrow(/Failed to parse cron store/i);
+    await store.cleanup();
+  });
+
+  it("writes cron store with private permissions", async () => {
+    if (process.platform === "win32") {
+      return;
+    }
+
+    const store = await makeStorePath();
+    await saveCronStore(store.storePath, { version: 1, jobs: [] });
+
+    const dirStat = await fs.stat(store.dir);
+    const fileStat = await fs.stat(store.storePath);
+    expect(dirStat.mode & 0o777).toBe(0o700);
+    expect(fileStat.mode & 0o777).toBe(0o600);
+
     await store.cleanup();
   });
 });
