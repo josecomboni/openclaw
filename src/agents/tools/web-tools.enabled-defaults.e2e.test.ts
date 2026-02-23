@@ -270,7 +270,7 @@ describe("web_search external content wrapping", () => {
     };
 
     expect(details.results?.[0]?.description).toMatch(
-      /<<<EXTERNAL_UNTRUSTED_CONTENT id="[a-f0-9]{16}">>>/,
+      /<<<EXTERNAL_UNTRUSTED_CONTENT id="[a-f0-9]{32}">>>/,
     );
     expect(details.results?.[0]?.description).toContain("Ignore previous instructions");
     expect(details.externalContent).toMatchObject({
@@ -334,7 +334,7 @@ describe("web_search external content wrapping", () => {
     const result = await executePerplexitySearchForWrapping("test");
     const details = result?.details as { content?: string };
 
-    expect(details.content).toMatch(/<<<EXTERNAL_UNTRUSTED_CONTENT id="[a-f0-9]{16}">>>/);
+    expect(details.content).toMatch(/<<<EXTERNAL_UNTRUSTED_CONTENT id="[a-f0-9]{32}">>>/);
     expect(details.content).toContain("Ignore previous instructions");
   });
 

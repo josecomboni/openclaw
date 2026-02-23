@@ -84,7 +84,7 @@ function storeSlackExternalArgMenu(params: {
   userId: string;
 }): string {
   pruneSlackExternalArgMenuStore();
-  const token = randomBytes(12).toString("hex");
+  const token = randomBytes(16).toString("hex");
   slackExternalArgMenuStore.set(token, {
     choices: params.choices,
     userId: params.userId,
