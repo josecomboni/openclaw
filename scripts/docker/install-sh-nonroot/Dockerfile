@@ -17,6 +17,9 @@ RUN set -eux; \
     sudo \
   && rm -rf /var/lib/apt/lists/*
 
+COPY run.sh /usr/local/bin/openclaw-install-nonroot
+RUN chmod +x /usr/local/bin/openclaw-install-nonroot
+
 RUN useradd -m -s /bin/bash app \
   && echo "app ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/app
 
@@ -25,8 +28,5 @@ WORKDIR /home/app
 
 ENV NPM_CONFIG_FUND=false
 ENV NPM_CONFIG_AUDIT=false
-
-COPY run.sh /usr/local/bin/openclaw-install-nonroot
-RUN sudo chmod +x /usr/local/bin/openclaw-install-nonroot
 
 ENTRYPOINT ["/usr/local/bin/openclaw-install-nonroot"]

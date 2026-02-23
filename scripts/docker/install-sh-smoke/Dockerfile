@@ -15,7 +15,6 @@ RUN set -eux; \
     g++ \
     make \
     python3 \
-    sudo \
   && rm -rf /var/lib/apt/lists/*
 
 COPY run.sh /usr/local/bin/openclaw-install-smoke

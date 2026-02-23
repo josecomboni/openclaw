@@ -7,6 +7,8 @@ RUN apt-get update \
     git \
   && rm -rf /var/lib/apt/lists/*
 
+RUN useradd -m -s /bin/bash app
+
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN corepack enable \
@@ -14,6 +16,9 @@ RUN corepack enable \
 
 COPY . .
 COPY scripts/docker/cleanup-smoke/run.sh /usr/local/bin/openclaw-cleanup-smoke
-RUN chmod +x /usr/local/bin/openclaw-cleanup-smoke
+RUN chmod +x /usr/local/bin/openclaw-cleanup-smoke \
+  && chown -R app:app /repo
+
+USER app
 
 ENTRYPOINT ["/usr/local/bin/openclaw-cleanup-smoke"]
