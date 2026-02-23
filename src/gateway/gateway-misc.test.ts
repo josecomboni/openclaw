@@ -21,12 +21,18 @@ import { formatError, normalizeVoiceWakeTriggers } from "./server-utils.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
 
 function makeControlUiResponse() {
+  const setHeader = vi.fn();
+  const end = vi.fn();
   const res = {
     statusCode: 200,
-    setHeader: vi.fn(),
-    end: vi.fn(),
+    setHeader,
+    end,
   } as unknown as ServerResponse;
-  return { res };
+  return { res, setHeader, end };
+}
+
+function readHeaderValue(setHeader: ReturnType<typeof vi.fn>, name: string): string | undefined {
+  return setHeader.mock.calls.find(([header]) => header === name)?.[1] as string | undefined;
 }
 
 const wsMockState = vi.hoisted(() => ({
@@ -149,6 +155,24 @@ describe("GatewayClient", () => {
       );
       expect(handled).toBe(true);
       expect(res.statusCode).toBe(200);
+    });
+  });
+
+  it("serves SPA fallback HTML for debug-like probe paths", async () => {
+    const indexHtml = "<html><body>openclaw-control-ui</body></html>\n";
+    await withControlUiRoot({ indexHtml }, async (tmp) => {
+      for (const route of ["/debug", "/metrics", "/status", "/__health", "/api/debug/config"]) {
+        const { res, setHeader, end } = makeControlUiResponse();
+        const handled = handleControlUiHttpRequest(
+          { url: route, method: "GET" } as IncomingMessage,
+          res,
+          { root: { kind: "resolved", path: tmp } },
+        );
+        expect(handled).toBe(true);
+        expect(res.statusCode).toBe(200);
+        expect(readHeaderValue(setHeader, "Content-Type")).toBe("text/html; charset=utf-8");
+        expect(end.mock.calls[0]?.[0]).toBe(indexHtml);
+      }
     });
   });
 });

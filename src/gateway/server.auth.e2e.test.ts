@@ -388,6 +388,23 @@ describe("gateway server auth/connect", () => {
       );
     });
 
+    test("rejects spoofed trusted-proxy headers at connect/auth protocol stage", async () => {
+      const ws = await openWs(port, {
+        "x-forwarded-user": "admin@evil.com",
+        "x-forwarded-proto": "https",
+        "tailscale-user-login": "admin@evil.com",
+        "x-webauth-user": "admin@evil.com",
+      });
+      try {
+        // Protocol-level auth verdict is authoritative, not raw HTTP upgrade status.
+        const res = await connectReq(ws, { skipDefaultAuth: true, device: null });
+        expect(res.ok).toBe(false);
+        expect(res.error?.message ?? "").toMatch(/unauthorized|device identity required/i);
+      } finally {
+        ws.close();
+      }
+    });
+
     test("does not grant admin when scopes are empty", async () => {
       await expectMissingScopeAfterConnect(port, { scopes: [] });
     });

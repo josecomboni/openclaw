@@ -93,6 +93,24 @@ describe("createLineNodeWebhookHandler", () => {
     expect(bot.handleWebhook).not.toHaveBeenCalled();
   });
 
+  it("rejects all-zero signatures in configured webhook mode", async () => {
+    const rawBody = JSON.stringify({ events: [{ type: "message" }] });
+    const { bot, handler } = createPostWebhookTestHarness(rawBody);
+    const zeroSignature = Buffer.alloc(32).toString("base64");
+
+    const { res } = createRes();
+    await handler(
+      {
+        method: "POST",
+        headers: { "x-line-signature": zeroSignature },
+      } as unknown as IncomingMessage,
+      res,
+    );
+
+    expect(res.statusCode).toBe(401);
+    expect(bot.handleWebhook).not.toHaveBeenCalled();
+  });
+
   it("accepts valid signature and dispatches events", async () => {
     const rawBody = JSON.stringify({ events: [{ type: "message" }] });
     const { bot, handler, secret } = createPostWebhookTestHarness(rawBody);
