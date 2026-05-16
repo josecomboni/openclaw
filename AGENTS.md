@@ -171,3 +171,22 @@ Skills own workflows; root owns hard policy and routing.
 - Local-only `.agents` ignores: `.git/info/exclude`, not repo `.gitignore`.
 - Provider tool schemas: prefer flat string enum helpers over `Type.Union([Type.Literal(...)])`; some providers reject `anyOf`.
 - External messaging: no token-delta channel messages. Follow `docs/concepts/streaming.md`.
+
+## FI Workflow (Fork Integration)
+
+- Fork Integration learnings, history, and reports: see `.fi/` directory.
+- FI worktrees use `fi/YYYY-MM-DD` branches at `../openclaw-fi/YYYY-MM-DD`.
+- `upstream` remote is read-only (fetch only); all pushes go to `origin`.
+
+## Security Learnings
+
+- Prompt sanitization: normalize with NFKC and strip zero-width/bidi chars before envelope stripping.
+- Plugin scanner: detect VM-based execution (`vm.Script`, `runIn*`), obfuscated eval, `Reflect.construct(Function)`.
+- Trusted-proxy auth: reject control characters and compare `allowUsers` case-insensitively.
+- SSRF guard: reject credential-bearing URLs before dispatch.
+- Subagent spawn: cap task size to 8000 chars.
+- Config validation: reject empty/dangerous `sandbox.workspaceRoot` values.
+- Log redaction: extend sensitive patterns to cover `credential`, `authorization`, `bearer`, `providerKey`, `clientPass`.
+- Docker: set `security_opt: no-new-privileges:true` and `cap_drop: [ALL]` for runtime services.
+- .dockerignore: exclude `.env*`, `openclaw.json`, `credentials/`.
+- Use `crypto.randomBytes()` for security tokens, never `Math.random()`.
