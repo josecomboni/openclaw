@@ -376,3 +376,12 @@ Security-relevant behavior is also covered by runtime validation, not only stati
 - Package acceptance and scheduled live/E2E workflows for release-path validation.
 
 These lanes exercise packaged installs, gateway/runtime behavior, live model/provider paths, Docker scenarios, and platform smoke tests. They complement scanners by proving the security-sensitive flows still behave correctly in real runtime environments.
+
+### TLS Fingerprint Pinning Trust Model
+
+TLS fingerprint pinning is an explicit trust-model tradeoff. When used:
+
+- Only `wss://` connections are permitted (never plain `ws://`)
+- Fingerprints must be verified out of band before being added to the trust store
+- Fingerprint rotation and distribution must be treated as a security-sensitive secret-management operation
+- Operators must plan for fingerprint expiry and rotation before deploying pinning in production
