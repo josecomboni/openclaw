@@ -175,7 +175,7 @@ Skills own workflows; root owns hard policy and routing.
 ## FI Workflow (Fork Integration)
 
 - Fork Integration learnings, history, and reports: see `.fi/` directory.
-- FI worktrees use `fi/YYYY-MM-DD` branches at `../openclaw-fi/YYYY-MM-DD`.
+- FI worktrees use `fi/YYYY.MMDD.NN` branches at `../openclaw-fi/YYYY.MMDD.NN`.
 - `upstream` remote is read-only (fetch only); all pushes go to `origin`.
 
 ## Security Learnings
