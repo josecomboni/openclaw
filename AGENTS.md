@@ -175,6 +175,7 @@ Skills own workflows; root owns hard policy and routing.
 ## FI Workflow (Fork Integration)
 
 - Fork Integration learnings, history, and reports: see `.fi/` directory.
+- Use `$fi-orchestrate` as the canonical entrypoint for continuous or manual FI runs; it delegates read-only recon to `$fi-recon` and worktree mutation to `$fi-apply`.
 - FI worktrees use `fi/YYYY.MMDD.NN` branches at `../openclaw-fi/YYYY.MMDD.NN`.
 - `upstream` remote is read-only (fetch only); all pushes go to `origin`.
 

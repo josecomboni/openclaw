@@ -1,0 +1,33 @@
+{
+  "upstream_remote": "upstream",
+  "fork_remote": "origin",
+  "target_branch": "main",
+  "run_id_format": "YYYY.MMDD.NN",
+  "merge_mode": "pr",
+  "direct_merge": {
+    "enabled": false,
+    "require_fast_forward": true,
+    "allow_force_push_once": false
+  },
+  "max_iterations": 5,
+  "max_wall_clock_minutes": 90,
+  "schedule": "weekly",
+  "lock_ttl_minutes": 120,
+  "min_interval_minutes": 60,
+  "webhook_debounce_seconds": 300,
+  "catastrophic_thresholds": {
+    "predicted_conflict_ratio": 0.5,
+    "deleted_upstream_files": 5,
+    "new_test_failure_ratio": 0.05
+  },
+  "validation": {
+    "mode": "sequential",
+    "baseline_failures": true,
+    "require_clean_tree": true
+  },
+  "learnings": {
+    "activate_only_after": "validated",
+    "promote_to_high_after_successful_runs": 2,
+    "quarantine_failed_run_learnings": true
+  }
+}
