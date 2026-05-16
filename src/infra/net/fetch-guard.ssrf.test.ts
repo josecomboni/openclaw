@@ -1239,7 +1239,7 @@ describe("fetchWithSsrFGuard hardening", () => {
         url: "http://attacker.com@127.0.0.1:8080/internal",
         fetchImpl,
       }),
-    ).rejects.toThrow(/private|internal|blocked/i);
+    ).rejects.toThrow(/credentials/i);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
@@ -1250,7 +1250,7 @@ describe("fetchWithSsrFGuard hardening", () => {
         url: "http://user:pass@[::1]:8080/internal",
         fetchImpl,
       }),
-    ).rejects.toThrow(/private|internal|blocked/i);
+    ).rejects.toThrow(/credentials/i);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
@@ -1259,7 +1259,7 @@ describe("fetchWithSsrFGuard hardening", () => {
     const fetchImpl = await expectRedirectFailure({
       url: "https://public.example/start",
       responses: [redirectResponse("http://public@127.0.0.1:6379/")],
-      expectedError: /private|internal|blocked/i,
+      expectedError: /credentials/i,
       lookupFn,
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
