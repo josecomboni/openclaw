@@ -280,6 +280,10 @@ function requireMockCall(
   return call;
 }
 
+function consoleWarnMessages(warnSpy: { mock: { calls: unknown[][] } }): string[] {
+  return warnSpy.mock.calls.map((call) => call.map(String).join(" "));
+}
+
 async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
   try {
     await promise;
@@ -1295,9 +1299,10 @@ describe("runWithModelFallback", () => {
       });
 
       expect(result.result).toBe("ok");
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[model-fallback] Model "openai/gpt-6" not found. Fell back to "anthropic/claude-haiku-3-5".',
-      );
+      const warnings = consoleWarnMessages(warnSpy);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toContain('Model "openai/gpt-6" not found');
+      expect(warnings[0]).toContain('Fell back to "anthropic/claude-haiku-3-5"');
     } finally {
       warnSpy.mockRestore();
       setLoggerOverride(null);

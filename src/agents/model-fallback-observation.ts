@@ -7,7 +7,7 @@ import type { FailoverReason } from "./pi-embedded-helpers.js";
 const decisionLog = createSubsystemLogger("model-fallback").child("decision");
 
 export function isModelFallbackDecisionLogEnabled(): boolean {
-  return decisionLog.isEnabled("warn");
+  return decisionLog.isEnabled("debug");
 }
 
 function buildErrorObservationFields(error?: string): {
@@ -147,7 +147,7 @@ export function logModelFallbackDecision(
     ? ` providerErrorType=${sanitizeForLog(observedError.providerErrorType)}`
     : "";
   const detailSuffix = detailText ? ` detail=${sanitizeForLog(detailText)}` : "";
-  decisionLog.warn("model fallback decision", {
+  decisionLog.debug("model fallback decision", {
     event: "model_fallback_decision",
     tags: ["error_handling", "model_fallback", params.decision],
     runId: params.runId,

@@ -97,6 +97,10 @@ const manifestNormalizationSnapshot = vi.hoisted(() => ({
   ],
 }));
 
+function consoleWarnMessages(warnSpy: { mock: { calls: unknown[][] } }): string[] {
+  return warnSpy.mock.calls.map((call) => call.map(String).join(" "));
+}
+
 vi.mock("../plugins/current-plugin-metadata-snapshot.js", () => ({
   getCurrentPluginMetadataSnapshot: () => manifestNormalizationSnapshot,
 }));
@@ -1585,9 +1589,11 @@ describe("model-selection", () => {
         });
 
         expect(result).toEqual({ provider: "google", model: "claude-3-5-sonnet" });
-        expect(warnSpy).toHaveBeenCalledWith(
-          '[model-selection] Model "claude-3-5-sonnet" specified without provider. Falling back to "google/claude-3-5-sonnet". Please use "google/claude-3-5-sonnet" in your config.',
-        );
+        const warnings = consoleWarnMessages(warnSpy);
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain('Model "claude-3-5-sonnet" specified without provider');
+        expect(warnings[0]).toContain('Falling back to "google/claude-3-5-sonnet"');
+        expect(warnings[0]).toContain('Please use "google/claude-3-5-sonnet" in your config');
       } finally {
         warnSpy.mockRestore();
         setLoggerOverride(null);
@@ -1840,9 +1846,10 @@ describe("model-selection", () => {
         });
 
         expect(result).toEqual({ provider: "openai", model: "gpt-5.4" });
-        expect(warnSpy).toHaveBeenCalledWith(
-          '[model-selection] Model "openai/" could not be resolved. Falling back to default "openai/gpt-5.4".',
-        );
+        const warnings = consoleWarnMessages(warnSpy);
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain('Model "openai/" could not be resolved');
+        expect(warnings[0]).toContain('Falling back to default "openai/gpt-5.4"');
       } finally {
         warnSpy.mockRestore();
         setLoggerOverride(null);
