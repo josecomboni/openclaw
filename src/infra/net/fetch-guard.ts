@@ -391,6 +391,10 @@ export async function fetchWithSsrFGuard(params: GuardedFetchOptions): Promise<G
       await release();
       throw new Error("Invalid URL: must be http or https");
     }
+    if (parsedUrl.username || parsedUrl.password) {
+      await release();
+      throw new Error("Invalid URL: credentials in URL are not allowed");
+    }
     if (params.requireHttps === true && parsedUrl.protocol !== "https:") {
       await release();
       throw new Error("URL must use https");

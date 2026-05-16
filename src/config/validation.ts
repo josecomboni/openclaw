@@ -47,6 +47,20 @@ import { OpenClawSchema } from "./zod-schema.js";
 
 const LEGACY_REMOVED_PLUGIN_IDS = new Set(["google-antigravity-auth", "google-gemini-cli-auth"]);
 const BLOCKED_PLUGIN_CANDIDATE_PREFIX = "blocked plugin candidate:";
+const WINDOWS_ROOT_RE = /^[a-zA-Z]:[\\/]*$/;
+const POSIX_SANDBOX_ROOT_BLOCKLIST = new Set<string>([
+  "/bin",
+  "/boot",
+  "/dev",
+  "/etc",
+  "/lib",
+  "/lib64",
+  "/proc",
+  "/root",
+  "/run",
+  "/sbin",
+  "/sys",
+]);
 
 type UnknownIssueRecord = Record<string, unknown>;
 type ConfigPathSegment = string | number;
@@ -640,6 +654,57 @@ function validateGatewayTailscaleBind(config: OpenClawConfig): ConfigValidationI
   ];
 }
 
+function validateSandboxWorkspaceRoots(config: OpenClawConfig): ConfigValidationIssue[] {
+  const issues: ConfigValidationIssue[] = [];
+  const checkRoot = (workspaceRootRaw: string, issuePath: string) => {
+    const trimmed = workspaceRootRaw.trim();
+    if (!trimmed) {
+      issues.push({ path: issuePath, message: "sandbox.workspaceRoot must not be empty." });
+      return;
+    }
+    if (WINDOWS_ROOT_RE.test(trimmed)) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not be the filesystem root.",
+      });
+      return;
+    }
+    const resolved = resolveUserPath(trimmed);
+    const root = path.parse(resolved).root;
+    if (resolved === root) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not be the filesystem root.",
+      });
+      return;
+    }
+    if (path.sep === "/" && POSIX_SANDBOX_ROOT_BLOCKLIST.has(resolved)) {
+      issues.push({
+        path: issuePath,
+        message: "sandbox.workspaceRoot must not point to a top-level system directory.",
+      });
+    }
+  };
+
+  const defaultRoot = (config as UnknownIssueRecord).agents as UnknownIssueRecord | undefined;
+  const defaults = defaultRoot?.defaults as UnknownIssueRecord | undefined;
+  const sandbox = defaults?.sandbox as UnknownIssueRecord | undefined;
+  const defaultWorkspaceRoot = sandbox?.workspaceRoot;
+  if (typeof defaultWorkspaceRoot === "string") {
+    checkRoot(defaultWorkspaceRoot, "agents.defaults.sandbox.workspaceRoot");
+  }
+  const agents = (defaultRoot?.list ?? []) as UnknownIssueRecord[];
+  if (Array.isArray(agents)) {
+    for (const [index, entry] of agents.entries()) {
+      const entryRoot = (entry?.sandbox as UnknownIssueRecord | undefined)?.workspaceRoot;
+      if (typeof entryRoot === "string") {
+        checkRoot(entryRoot, `agents.list.${index}.sandbox.workspaceRoot`);
+      }
+    }
+  }
+  return issues;
+}
+
 /**
  * Validates config without applying runtime defaults.
  * Use this when you need the raw validated config (e.g., for writing back to file).
@@ -695,6 +760,10 @@ export function validateConfigObjectRaw(
   const gatewayTailscaleBindIssues = validateGatewayTailscaleBind(validatedConfig);
   if (gatewayTailscaleBindIssues.length > 0) {
     return { ok: false, issues: gatewayTailscaleBindIssues };
+  }
+  const sandboxWorkspaceRootIssues = validateSandboxWorkspaceRoots(validatedConfig);
+  if (sandboxWorkspaceRootIssues.length > 0) {
+    return { ok: false, issues: sandboxWorkspaceRootIssues };
   }
   return {
     ok: true,

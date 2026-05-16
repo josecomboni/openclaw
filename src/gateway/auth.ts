@@ -312,9 +312,18 @@ function authorizeTrustedProxy(params: {
 
   const user = userHeaderValue.trim();
 
+  // Reject control characters to prevent header-smuggling identity abuse.
+  if (hasControlCharacters(user)) {
+    return { reason: "trusted_proxy_user_invalid" };
+  }
+
   const allowUsers = trustedProxyConfig.allowUsers ?? [];
-  if (allowUsers.length > 0 && !allowUsers.includes(user)) {
-    return { reason: "trusted_proxy_user_not_allowed" };
+  if (allowUsers.length > 0) {
+    const normalizedUser = user.toLowerCase();
+    const isAllowed = allowUsers.some((allowed) => allowed.trim().toLowerCase() === normalizedUser);
+    if (!isAllowed) {
+      return { reason: "trusted_proxy_user_not_allowed" };
+    }
   }
 
   return { user };
@@ -322,6 +331,16 @@ function authorizeTrustedProxy(params: {
 
 function shouldAllowTailscaleHeaderAuth(authSurface: GatewayAuthSurface): boolean {
   return authSurface === "ws-control-ui";
+}
+
+function hasControlCharacters(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code < 0x20 || code === 0x7f) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function authorizeTrustedProxyBrowserOrigin(params: {
