@@ -8,6 +8,13 @@ import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 
 export { stripEnvelope };
 
+const UNICODE_FORMAT_AND_BIDI_RE = /[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+
+/** NFKC-normalize and strip zero-width/bidi format characters from untrusted input. */
+function normalizeUntrustedMessageText(text: string): string {
+  return text.normalize("NFKC").replace(UNICODE_FORMAT_AND_BIDI_RE, "");
+}
+
 function extractMessageSenderLabel(entry: Record<string, unknown>): string | null {
   if (typeof entry.senderLabel === "string" && entry.senderLabel.trim()) {
     return entry.senderLabel.trim();
@@ -49,9 +56,10 @@ function stripEnvelopeFromContentWithRole(
     if (entry.type !== "text" || typeof entry.text !== "string") {
       return item;
     }
+    const normalized = normalizeUntrustedMessageText(entry.text);
     const stripped = stripUserEnvelope
-      ? stripUserEnvelopeForDisplay(entry.text)
-      : stripInternalMetadataForDisplay(entry.text);
+      ? stripUserEnvelopeForDisplay(normalized)
+      : stripInternalMetadataForDisplay(normalized);
     if (stripped === entry.text) {
       return item;
     }
@@ -81,9 +89,10 @@ export function stripEnvelopeFromMessage(message: unknown): unknown {
   }
 
   if (typeof entry.content === "string") {
+    const normalized = normalizeUntrustedMessageText(entry.content);
     const stripped = stripUserEnvelope
-      ? stripUserEnvelopeForDisplay(entry.content)
-      : stripInternalMetadataForDisplay(entry.content);
+      ? stripUserEnvelopeForDisplay(normalized)
+      : stripInternalMetadataForDisplay(normalized);
     if (stripped !== entry.content) {
       next.content = stripped;
       changed = true;
@@ -95,9 +104,10 @@ export function stripEnvelopeFromMessage(message: unknown): unknown {
       changed = true;
     }
   } else if (typeof entry.text === "string") {
+    const normalized = normalizeUntrustedMessageText(entry.text);
     const stripped = stripUserEnvelope
-      ? stripUserEnvelopeForDisplay(entry.text)
-      : stripInternalMetadataForDisplay(entry.text);
+      ? stripUserEnvelopeForDisplay(normalized)
+      : stripInternalMetadataForDisplay(normalized);
     if (stripped !== entry.text) {
       next.text = stripped;
       changed = true;

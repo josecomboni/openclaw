@@ -692,7 +692,14 @@ export async function spawnSubagentDirect(
   params: SpawnSubagentParams,
   ctx: SpawnSubagentContext,
 ): Promise<SpawnSubagentResult> {
+  const MAX_SUBAGENT_TASK_CHARS = 8_000;
   const task = params.task;
+  if (task.length > MAX_SUBAGENT_TASK_CHARS) {
+    return {
+      status: "error",
+      error: `Task too long (${task.length} chars, max ${MAX_SUBAGENT_TASK_CHARS}).`,
+    };
+  }
   const taskNameResult = normalizeSubagentTaskName(params.taskName);
   if (taskNameResult.error) {
     return {
