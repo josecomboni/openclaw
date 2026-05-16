@@ -171,6 +171,7 @@ Skills own workflows; root owns hard policy and routing.
 - Local-only `.agents` ignores: `.git/info/exclude`, not repo `.gitignore`.
 - Provider tool schemas: prefer flat string enum helpers over `Type.Union([Type.Literal(...)])`; some providers reject `anyOf`.
 - External messaging: no token-delta channel messages. Follow `docs/concepts/streaming.md`.
+- Instruction updates (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/**`) must use their own branch and commit; branch names use `yyyymmdd/instructions-updates.nn`. Do not bundle with product/code changes because local instructions may not be valid upstream.
 
 ## FI Workflow (Fork Integration)
 
