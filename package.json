@@ -1785,7 +1785,7 @@
     "markdown-it": "14.1.1",
     "node-edge-tts": "1.2.10",
     "openai": "6.37.0",
-    "pdfjs-dist": "5.7.284",
+    "pdfjs-dist": "6.2.108",
     "playwright-core": "1.60.0",
     "qrcode": "1.5.4",
     "quickjs-wasi": "2.2.0",
